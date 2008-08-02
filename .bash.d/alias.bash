@@ -45,7 +45,8 @@ alias xgcc='gcc -W -Wall'
 alias fixme='grep -rn FIXME .'
 alias xvalgrind='valgrind --leak-check=full --leak-resolution=high --show-reachable=yes'
 alias pwgen='pwgen --symbols --secure --num-passwords=5 --capitalize -C --ambiguous 12'
-alias junk='rm -i *~ ; rm -i *# ; rm -i *.exe ; rm -i exe'
+alias dls="~/script/ls.sh"
+alias junk='rm -i *~ *# *.exe exe a.out *.log *.aux *.toc *.tmp'
 alias auth='echo "* $USER" > AUTHORS ; chmod 640 AUTHORS'
 alias helpmount="echo 'mount -t iso9660 -o loop /path/to/isoimage.iso /path/to/mount/point/'"
 alias bin2avi="~/script/bin2avi.sh"
