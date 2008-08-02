@@ -7,7 +7,6 @@
 (setq load-path (cons "~/.emacs.d/modes" load-path))
 (setq load-path (cons "~/.emacs.d/modes/color-theme" load-path))
 
-
 ;; UTF-8
 (setq locale-coding-system 'utf-8)
 (set-terminal-coding-system 'utf-8)
@@ -73,7 +72,7 @@
 (setq next-line-add-newlines nil)     ; prevents new line after eof
 (setq default_indice_empty_lines t)   ; show lines at end of file
 (setq default-indicate-empty-lines t) ; show the end of the file
-(normal-erase-is-backspace-mode)      ; delete touch work
+;(normal-erase-is-backspace-mode)     ; delete touch work
 (setq-default show-trailing-whitespace t)
 (auto-image-file-mode)                ; to see picture in emacs
 
