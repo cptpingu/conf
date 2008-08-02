@@ -1,0 +1,312 @@
+;; -*- mode: Lisp; -*-
+(setq user-nickname "Axel Berardino")
+(setq user-full-name "Axel Berardino")
+
+;; Our own modes repository
+(setq load-path (cons "~/.emacs.d/" load-path))
+(setq load-path (cons "~/.emacs.d/modes" load-path))
+(setq load-path (cons "~/.emacs.d/modes/color-theme" load-path))
+
+
+;; UTF-8
+(setq locale-coding-system 'utf-8)
+(set-terminal-coding-system 'utf-8)
+(set-keyboard-coding-system 'utf-8)
+(set-selection-coding-system 'utf-8)
+(prefer-coding-system 'utf-8)
+
+;; My key binding
+(global-set-key [f1] 'debug-line)
+(global-set-key [f2] 'undo)
+(global-set-key [f3] 'eshell)
+(global-set-key [f4] 'kill-this-buffer)
+(global-set-key [f9] 'compile)
+(global-set-key [f10] 'recompile)
+(global-set-key [f11] 'next-error)
+(global-set-key [f12] 'insert-header-guard)
+(global-set-key "" 'goto-line)
+
+;; Doxygen
+(require 'doxymacs)
+(add-hook 'c-mode-common-hook 'doxymacs-mode)
+(setq doxymacs-doxygen-style "JavaDoc")
+(defun my-doxymacs-font-lock-hook ()
+     (if (or (eq major-mode 'c-mode) (eq major-mode 'c++-mode))
+         (doxymacs-font-lock)))
+   (add-hook 'font-lock-mode-hook 'my-doxymacs-font-lock-hook)
+
+;============================
+; Emacs customization script
+;============================
+
+(custom-set-variables '(pc-selection-mode t nil (pc-select))) ; select with shift
+(require 'paren)                      ; show matching bracket
+(show-paren-mode)
+(setq visible-bell t)                 ; disable annoying beep
+(set-background-color "Black")        ; black background
+(set-foreground-color "White")        ; white foreground
+(delete-trailing-whitespace)          ; delete trailing whitespaces
+(setq inhibit-startup-message t)      ; don't show the GNU splash screen
+(scroll-bar-mode nil)                 ; no scroll bar
+(menu-bar-mode -1)                    ; no menu bar
+(tool-bar-mode -1)                    ; no tool bar
+(setq frame-title-format "<[ %b ]>")  ; titlebar shows buffer's name
+(global-font-lock-mode t)             ; syntax highlighting
+(setq font-lock-maximum-decoration t) ; maximum decoration for all modes
+(show-paren-mode t)                   ; show opposing paren while hovering
+(setq scroll-step 1)                  ; smooth scrolling
+(delete-selection-mode t)             ; typing removes highlighted text
+(line-number-mode t)                  ; display line number in modeline
+(column-number-mode t)                ; display column number in modeline
+;(setq display-time-day-and-date t)   ; display date in modeline
+(setq display-time-24hr-format t)     ; european 24h format
+(display-time)                        ; display time in modeline
+(auto-compression-mode t)             ; open compressed files
+(mouse-wheel-mode t)                  ; enable mouse wheel
+(fset 'yes-or-no-p 'y-or-n-p)         ; y or n will do
+(setq default-major-mode 'text-mode)  ; change default major mode to text
+(setq ring-bell-function 'ignore)     ; turn the alarm totally off
+;(setq-default indent-tabs-mode nil)  ; spaces instead of tabs
+(setq make-backup-files nil)          ; no backupfile
+(setq delete-auto-save-files t)       ; delete unnecessary autosave files
+(setq delete-old-versions t)          ; delete oldversion file
+(setq next-line-add-newlines nil)     ; prevents new line after eof
+(setq default_indice_empty_lines t)   ; show lines at end of file
+(setq default-indicate-empty-lines t) ; show the end of the file
+(normal-erase-is-backspace-mode)      ; delete touch work
+(setq-default show-trailing-whitespace t)
+(auto-image-file-mode)                ; to see picture in emacs
+
+(dynamic-completion-mode)             ; dynamic completion
+(when (string-match "^22." emacs-version)
+  (ido-mode t))
+(when (string-match "^23." emacs-version)
+  (ido-mode t))
+(icomplete-mode)
+
+
+;; Ctrl-Tab = Next buffer
+(global-set-key [(control tab)] 'other-window)
+
+;; Ctrl-Shift-Tab = Previous buffer
+(global-set-key [C-S-iso-lefttab]
+               '(lambda () (interactive)
+                  (other-window -1)))
+
+
+;; C mode
+(add-hook `c-mode-hook `rm-trailing-spaces-always)
+(add-hook `c-mode-hook `cwarn-mode)
+
+
+(load-file "~/.emacs.d/styles/c.el")
+
+;; Some script
+
+;; Completion
+
+(require 'company-mode)
+(require 'company-bundled-completions)
+(company-install-bundled-completions-rules)
+
+;; Spell checking
+
+(setq ispell-dictionary "francais"
+      ispell-skip-sgml t)
+(autoload 'flyspell-mode "flyspell" "On-the-fly spelling checking" t)
+(setq flyspell-default-dictionary "francais")
+(add-hook 'latex-mode-hook (lambda () (flyspell-mode 1)))
+
+;; Auto insert C/C++ header guard
+(add-hook 'find-file-hooks
+          (lambda ()
+            (when (and (memq major-mode '(c-mode c++-mode)) (equal (point-min) (point-max)) (string-match ".*\\.hh?" (buffer-file-name)))
+              (insert-header-guard)
+              (goto-line 3)
+              (insert "\n"))))
+
+;; Start code folding mode in C/C++ mode
+;; (add-hook 'c-mode-common-hook (lambda () (hs-minor-mode 1) (hs-hide-all)))
+;; Highlight trailing withespaces
+(add-hook 'c-mode-common-hook (lambda () (highlight-regexp " +$" "hi-red")))
+(add-hook 'c-mode-common-hook (lambda () (highlight-regexp "FIXME" "hi-red-b")))
+(add-hook 'c-mode-common-hook (lambda () (highlight-regexp "TODO" "hi-red-b")))
+(add-hook 'sh-mode-common-hook (lambda () (highlight-regexp " +$" "hi-red")))
+
+
+;; Insert the header guard (.h, .hh)
+(defun insert-header-guard ()
+ (interactive)
+ (save-excursion
+   (when (buffer-file-name)
+     (if  (string-match ".hh$" buffer-file-name)
+       (let*
+           (
+            (name (file-name-nondirectory buffer-file-name))
+            (macro (replace-regexp-in-string "\\." "_" (upcase name)))
+            (macro (replace-regexp-in-string "-" "_" macro))
+            (macro (concat macro "_"))
+            )
+         (goto-char (point-min))
+         (insert "#ifndef " macro "\n")
+         (insert "# define " macro "\n\n")
+         (goto-char (point-max))
+         (insert "\n#endif /* !" macro " */\n")
+         )
+       )
+     )
+   )
+ )
+
+;; Indentation automatique sur appuie de la touche F5
+(defun indent-buffer ()
+  (interactive)
+  (indent-region (point-min) (point-max) nil)
+  (delete-trailing-whitespace))
+(global-set-key [f5]  'indent-buffer)
+
+;; Highlight a line
+;;(global-hl-line-mode 1)
+
+(defun debug-line()
+  "Debuging Line"
+  (interactive)
+  (newline)
+  (insert   "std::cout << \"[DEBUG] in \" << __FILE__")
+  (newline)
+  (insert   	    "<< \" in \" << __FUNCTION__")
+  (newline)
+  (insert   	    "<< \" () at line \" << __LINE__ << std::endl;")
+  (newline)
+  (previous-line 1)
+  ;;(forward-char 2)
+  )
+
+
+;(standard-display-european 1)
+;(set-input-mode nil nil 1)
+; elisp functions
+
+(defun yic-ignore (str)
+  (or
+   (string-match "\\*Buffer List\\*" str)
+   (string-match "\\*scratch\\*" str)
+   (string-match "^TAGS" str)
+   (string-match "^\\*Messages\\*$" str)
+   (string-match "^\\*Completions\\*$" str)
+   (string-match "^ " str)
+   (memq str
+         (mapcar
+          (lambda (x)
+            (buffer-name
+             (window-buffer
+              (frame-selected-window x))))
+          (visible-frame-list)))
+   ))
+(defun yic-next (ls)
+  (let* ((ptr ls)
+	 bf bn go
+	 )
+    (while (and ptr (null go))
+      (setq bf (car ptr)  bn (buffer-name bf))
+      (if (null (yic-ignore bn))
+	  (setq go bf)
+	(setq ptr (cdr ptr))
+	)
+      )
+    (if go
+	(switch-to-buffer go))))
+
+(defun yic-prev-buffer ()
+  (interactive)
+  (yic-next (reverse (buffer-list))))
+
+(defun yic-next-buffer ()
+  (interactive)
+  (bury-buffer (current-buffer))
+  (yic-next (buffer-list)))
+
+
+(add-hook 'c-mode-hook 'fp-c-mode-routine)
+(defun fp-c-mode-routine ()
+  (local-set-key "\M-q" 'rebox-comment))
+(autoload 'rebox-comment "rebox" nil t)
+(autoload 'rebox-region "rebox" nil t)
+
+(defun do_insert_time ()
+  (interactive)
+ (insert-string (current-time-string)))
+
+;;
+;; Programation modes
+;;
+;;(load-file "~/.emacs.d/std_comment.el")
+;;(load-file "~/.emacs.d/div.el")
+
+; Ruby!!
+(autoload 'ruby-mode "ruby-mode" "Ruby editing mode." t)
+(add-to-list 'auto-mode-alist '("\\.rb$" . ruby-mode))
+(add-to-list 'interpreter-mode-alist '("ruby" . ruby-mode))
+
+; Tiger
+(autoload 'tiger-mode "tiger-mode" "tiger editing mode." t)
+(add-to-list 'auto-mode-alist '("\\.tig$" . tiger-mode))
+
+; Flex
+(autoload 'flex-mode "flex-mode" "flex editing mode." t)
+(add-to-list 'auto-mode-alist '("\\.l$" . flex-mode))
+(add-to-list 'auto-mode-alist '("\\.ll$" . flex-mode))
+
+; Bison
+(autoload 'bison-mode "bison-mode" "bison editing mode." t)
+(add-to-list 'auto-mode-alist '("\\.y$" . bison-mode))
+(add-to-list 'auto-mode-alist '("\\.yy$" . bison-mode))
+
+; XML and traces
+(setq auto-mode-alist
+      (cons '("\\.trace$" . sgml-mode) auto-mode-alist))
+(setq auto-mode-alist
+      (cons '("\\.xml" . sgml-mode) auto-mode-alist))
+
+
+
+;; ================= THEME ==============================
+
+
+
+(custom-set-faces
+  ;; custom-set-faces was added by Custom -- don't edit or cut/paste it!
+  ;; Your init file should contain only one such instance.
+ '(background "blue")
+ '(font-lock-builtin-face ((t (:foreground "#0000FF" :weight bold))))
+ '(font-lock-comment-face ((t (:foreground "#FF8F35"))))
+ '(font-lock-constant-face ((((class color) (background dark)) (:bold t :foreground "DarkOrchid"))))
+ '(font-lock-doc-face ((t (:inherit font-lock-string-face :foreground "limegreen" :weight bold))))
+ '(font-lock-doc-string-face ((t (:foreground "green2"))))
+ '(font-lock-function-name-face ((t (:foreground "#0000FF"))))
+ '(font-lock-keyword-face ((t (:foreground "#0FFFFF" :weight bold))))
+ '(font-lock-preprocessor-face ((t (:italic nil :foreground "CornFlowerBlue"))))
+ '(font-lock-reference-face ((t (:foreground "DodgerBlue"))))
+ '(font-lock-string-face ((t (:foreground "LimeGreen" :slant italic))))
+ '(font-lock-type-face ((t (:foreground "#00FF00"))))
+ '(font-lock-variable-name-face ((t (:foreground "#FFF82A"))))
+ '(font-lock-warning-face ((((class color) (background dark)) (:foreground "yellow" :background "red"))))
+ '(highlight ((t (:background "CornflowerBlue"))))
+ '(list-mode-item-selected ((t (:background "gold"))))
+ '(makefile-space-face ((t (:background "wheat"))))
+ '(modeline ((t (:background "Navy"))))
+ '(paren-match ((t (:background "darkseagreen4"))))
+ '(region ((t (:background "DarkSlateBlue"))))
+ '(show-paren-match-face ((t (:foreground "black" :background "wheat"))))
+ '(show-paren-mismatch-face ((((class color)) (:foreground "white" :background "red"))))
+ '(speedbar-button-face ((((class color) (background dark)) (:foreground "green4"))))
+ '(speedbar-directory-face ((((class color) (background dark)) (:foreground "khaki"))))
+ '(speedbar-file-face ((((class color) (background dark)) (:foreground "cyan"))))
+ '(speedbar-tag-face ((((class color) (background dark)) (:foreground "Springgreen"))))
+ '(vhdl-font-lock-reserved-words-face ((t (:foreground "Orchid1" :weight bold))))
+ '(vhdl-speedbar-architecture-selected-face ((((class color) (background dark)) (:underline t :foreground "Blue"))))
+ '(vhdl-speedbar-entity-face ((((class color) (background dark)) (:foreground "darkGreen"))))
+ '(vhdl-speedbar-entity-selected-face ((((class color) (background dark)) (:underline t :foreground "darkGreen"))))
+ '(vhdl-speedbar-package-face ((((class color) (background dark)) (:foreground "black"))))
+ '(vhdl-speedbar-package-selected-face ((((class color) (background dark)) (:underline t :foreground "black"))))
+ '(widget-field-face ((((class grayscale color) (background light)) (:background "DarkBlue")))))
