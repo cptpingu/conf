@@ -15,6 +15,7 @@ function lcd()
 {
     cd "$1" && ls
 }
+
 alias pcd='cd -P'
 alias df='df -h'
 alias du='du -h --max-depth=1'
@@ -51,8 +52,14 @@ alias auth='echo "* $USER" > AUTHORS ; chmod 640 AUTHORS'
 alias helpmount="echo 'mount -t iso9660 -o loop /path/to/isoimage.iso /path/to/mount/point/'"
 alias bin2avi="~/script/bin2avi.sh"
 alias starcraft="~/script/starcraft.sh"
-if which colormake >/dev/null 2>&1 && false ; then
+if which colormake >/dev/null 2>&1; then
     alias make='colormake'
+fi
+if which colordiff >/dev/null 2>&1; then
+    alias diff='colordiff'
+fi
+if which colorgcc >/dev/null 2>&1; then
+    alias gcc='colorgcc'
 fi
 
 function x-ssh-agent()
