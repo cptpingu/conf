@@ -1,0 +1,1022 @@
+#!/bin/bash
+#
+# But: Telecharger des videos de canalplus.fr et les mettre dans une playlist
+# Auteur : Ras'
+# Dépendances : Zenity, wget
+# Licence : Ce script est un logiciel libre ; vous pouvez le redistribuer et/ou le modifier
+# selon les termes de la Licence Publique Générale GNU ( GNU GPL ) publiée par la Free Software
+# Foundation.
+#
+# Merci à beudbeud pour l'implémentation de la fonction d'automatisation via cron
+#
+
+todo="
+Ajouter une icône (voir une barre de progression) dans la zone de notification
+
+
+N'hésitez pas à proposer les votres sur le forum :
+http://forum.ubuntu-fr.org/viewtopic.php?id=200149
+"
+
+
+version=v1.304
+touch .canal_log
+clear
+parent_dir=$( dirname "$0" )
+if [[ "$parent_dir" == "." ]]
+then
+    parent_dir=$( pwd )
+fi
+
+
+##############################################
+# Affichage en couleur dans en console
+color()
+{
+    printf '\033[%sm%s\033[m\n' "$@"
+}
+##############################################
+
+
+
+
+##############################################
+# Mise à jour automatique du script
+function maj_auto
+{
+    cd /tmp
+    rm -f canal*
+    wget "http://ibidems.free.fr/ras/script/canal" &>/dev/null
+    if ! [[ -f canal ]]
+    then zenity --warning --title="Fin du script" --text="Veuillez vérifier votre connection internet et relancer le script."
+	exit
+    fi
+
+    new=$( cat canal | grep "version=[v]" | cut -f2 -d "=" )
+    wget "http://ibidems.free.fr/ras/script/$new.txt" &>/dev/null
+
+    if ! [[ "$new" = "$version" ]]
+    then
+	zenity --info --text="La version $new est disponible, voici la liste des nouveautées :
+    $(cat $new.txt)
+
+    Voulez vous installer cette version ?"
+	if [[ $? == "0" ]]
+	then
+	    echo "Mise à jour du script en cours..."
+	    set --
+	    rm -f "$parent_dir"/canal
+	    cp canal "$parent_dir"/
+	    chmod +x "$parent_dir"/canal
+	    rm -f canal*
+
+	    zenity --question --title="Mise à jour" --text="Une mise à jour a été effectuée vers la version $new
+    Merci de bien vouloir relancer le script."
+	    exit
+	fi
+    fi
+}
+##############################################
+
+
+
+
+
+##############################################
+# Fonction --help
+function _help
+{
+    help="Télécharger les quotidiennes (ou pas) de Canal+
+    Créé par Ras'
+
+	Usage : ./canal [ARGUMENT]
+
+	Arguments disponibles :
+	-m, --menu     Ouvre un menu permettant de choisir
+        parmis les options suivantes
+
+	-c, --config   Configurer le script
+        Lors de la première exécution, le script
+        se lance automatiquement en configuration
+
+	-d, --date     Ouvre un calendrier Zenity
+        Permet l'utilisation du script graphiquement
+
+    -a, --alacarte Permet exeptionnellement de télécharger
+    des émissions différentes des habituelles
+    (sans changer la configuration)
+
+    -l, --lanceur  Permet de rajouter une icône de lancement
+    dans le menu \"Applications > Son et Video\"
+
+    -cr, --cron    Permet l'ajout du tâche planifié
+
+	-b, --bug      Ouvre Firefox à l'adresse :
+    http://forum.ubuntu-fr.org/viewtopic.php?id=200149
+    Topic du forum ubuntu-fr.org permettant de
+    rapporter un bug
+
+    -h, --help     Affiche cette aide et quitte
+
+    -?, --about    Affiche les informations sur le script
+
+    "
+    if ( grep -q GTK "$parent_dir"/.canal_config )
+    then zenity --info --title="Emissions déja présentes" --text="$help"
+    else echo "$help"
+    fi
+    exit
+}
+##############################################
+
+
+
+
+##############################################
+# Ajout d'une entrée dans le menu Applications > Son et vidéo
+function _lanceur
+{
+    if ! [[ -f logo64x64.svg ]]
+    then
+	wget -q http://ibidems.free.fr/ras/script/logo64x64.svg
+    fi
+    echo "[Desktop Entry]
+    Type=Application
+    Encoding=UTF-8
+    Name=Canal
+    GenericName=Canal
+    Comment=Script permettant de télécharger les quotidiennes du site de Canal+
+    Icon=$parent_dir/logo64x64.svg
+    Exec=$parent_dir/canal --menu
+    Terminal=false
+    StartupNotify=false
+    Categories=Application;AudioVideo" > canal.desktop
+    zenity --info --text="Le Script à besoin de votre mot de passe utilisateur pour créer l'entrée du menu 'Applications > Son et videos'.
+Ce mot de passe ne sera évidemment pas sauvegardé ni utilisé ultérieurement par le script."
+    gksudo 'mv -f canal.desktop /usr/share/applications/'
+    zenity --info --text="Une entrée 'Canal' à été ajouté au menu 'Applications > Son et videos'.
+
+Merci de bien vouloir relancer le script."
+    sudo -k
+    exit
+}
+##############################################
+
+
+
+
+##############################################
+# Externalisation des fonctions "choix des émissions" et "true/false" de la configuration pour pouvoir marcher avec l'option "alacarte"
+# Fonction permettant d'afficher par défaut les options de l'ancien fichier de config
+function true_false
+{
+    if ( grep -q $1 .canal_config.bak &>/dev/null )
+    then echo "TRUE"
+    else echo "FALSE"
+    fi
+}
+
+function choix_emissions
+{
+    zenity --list --checklist --height=580 --width=400\
+    --title="Configuration en cours... 4/7" \
+	--text="Choix des émissions à télécharger"\
+    --column="" --column="" --column="Emissions" \
+	--hide-column=2 \
+	--separator=" " \
+	`true_false ZAP` ZAP "Le zapping"\
+    `true_false PJA` PJA "Le petit journal actu de Yann Barthès"\
+    `true_false GUI` GUI "Les guignols de l'info"\
+    `true_false MET` MET "La météo de Louise Bourguoin"\
+    `true_false PJP` PJP "Le petit journal people de Yann Barthès"\
+    `true_false TOP` TOP "Le Top 5 de Thomas Nguijol"\
+    `true_false SAV` SAV "Le service après vente d'Omar et Fred"\
+    `true_false BAQ` BAQ "La boite à questions"\
+    `true_false RDP` RDP "La revue de presse de Chris Esquerre"\
+    `true_false STO` STO "La chronique de Sebastien Tohen"\
+    `true_false ADM` ADM "L'avis de Mouloud"\
+    `true_false DSH` DSH "Le daily show"\
+    `true_false SGU` SGU "La chronique de Stephane Guillon"\
+    `true_false IDB` IDB "Les infos de Blakowski" \
+	`true_false CDA` CDA "Le champion de l'actu"\
+    `true_false GRO` GRO "Le Groland"\
+    `true_false TAC` TAC "Les têtes à claques"\
+    `true_false PEP` PEP "Les Pépites du net" \
+	`true_false MDH` MDH "Le meilleur du hier (semaine courante)" >> $1
+}
+##############################################
+
+
+
+
+
+##############################################
+# Si l'option d'appel est '--config' le script est lancé uniquement pour la création/modification du fichier canal_config
+function _config
+{
+    cp .canal_config .canal_config.bak &>/dev/null
+    rm -f .canal_config
+    echo "Configuration en cours..."
+
+
+# Vérification des dépendances :
+    if [ !  $(which zenity) ]
+    then echo "Zenity n'est pas installé, merci de l'installer pour assurer le bon fonctionnement du script :
+
+Ouvrez un terminal et tapez : sudo apt-get install zenity
+Puis relancez le script.
+Merci."
+	exit
+    fi
+
+
+# Choix du répertoire de téléchargement
+    zenity --info --title="Configuration en cours... 1/7" --text="Choisir un répertoire pour le téléchargement des émissions
+( un sous répertoire \"Canal+/\" y sera automatiquement créé )"
+    REP=$(zenity --title="Choisir un répertoire pour le télécharchement des émissions" --file-selection --directory)
+    echo "$REP" > .canal_config
+
+
+# Choix du mode de fonctionnement
+    zenity --list --list --radiolist --height=210 --width=200 \
+	--title="Configuration en cours... 2/7" \
+	--text="Choix du lecteur de vidéos"\
+    --column="" --column="" --column="mode" \
+	--hide-column=2 \
+	--separator=" " \
+	`true_false vlc` vlc "vlc media player"\
+    `true_false mplayer` mplayer "mplayer movie player"\
+    `true_false totem` totem "totem" >> .canal_config
+
+
+# Choix du mode de fonctionnement
+    zenity --list --list --radiolist --height=210 --width=840 \
+	--title="Configuration en cours... 3/7" \
+	--text="Choix du mode de fonctionnement"\
+    --column="" --column="" --column="mode" \
+	--hide-column=2 \
+	--separator=" " \
+	`true_false QUO` QUO "Quotidien : les anciennes vidéos sont supprimées et remplacées par les nouvelles"\
+    `true_false HIS` HIS "Historique : un dossier est créé pour chaque jour de diffusion, les anciennes vidéos ne sont pas supprimées"\
+    `true_false HEM` HEM "Historique : un dossier est créé pour chaque émission, les anciennes vidéos ne sont pas supprimées" >> .canal_config
+
+# Choix des émissions à télécharger
+    choix_emissions ".canal_config"
+
+# Choix de la qualité des vidéos
+    zenity --list --list --radiolist --height=190 --width=650 \
+	--title="Configuration en cours... 5/7" \
+	--text="Choix de la qualité de lecture des vidéos"\
+    --column="" --column="" --column="mode" \
+	--hide-column=2 \
+	--separator=" " \
+	`true_false HIGH` HIGH "High : Optimisation de la qualité d'image, vidéos plus lourde "\
+    `true_false LOW` LOW "Low : Optimisation de la vitesse de téléchargement, qualité d'image moins bonne" >> .canal_config
+
+# Choix d'un mode de conversion vidéo
+choix=$( zenity --list --list --radiolist --height=330 --width=575\
+    --title="Configuration en cours... 6/7" \
+    --text="Le script permet de convertir les vidéos dans d'autres format que l'original (.flv)
+Cliquez sur 'annuler' si vous ne désirez pas convertir les vidéos"\
+    --column="" --column="" --column="Format de conversion" \
+    --hide-column=2 \
+    --separator=" " \
+    `true_false AVI` AVI "Convertir les vidéos au format .avi"\
+    `true_false MKV` MKV "Convertir les vidéos au format .mkv"\
+    `true_false IPOD` IPOD "Convertir les vidéos en un format lisible par un iPod"\
+    `true_false ARCHOS` ARCHOS "Convertir les vidéos en un format lisible par un Archos / Creative Zen"\
+    `true_false IRIVER` IRIVER "Convertir les vidéos en un format lisible par un iRiver"\
+    `true_false MEIZU` MEIZU "Convertir les vidéos en un format lisible par un Meizu"\
+    `true_false PSP` PSP "Convertir les vidéos en un format lisible par une PSP "\ )
+if ! [[ $? == "0" ]] || [[ -z $choix ]]
+then zenity --info --title="Configuration en cours... 6/7" --text="Les vidéos ne seront pas converties"
+else echo "CONVERT=$choix" >> .canal_config
+    zenity --info --title="Configuration en cours... 6/7" --text="Certaines dépendances sont nécessaire pour effectuer cette conversion. Merci de bien vouloir les installer. Ouvrez un terminal et entrez les commandes suivantes :
+
+Pour les iPod et PSP
+sudo apt-get install ffmpeg faac libfaac0
+
+Pour le mkv
+sudo apt-get install ffmpeg ffmpeg2theora
+
+Pour les autres
+sudo apt get install mencoder
+
+
+Si le script ne télécharge pas de vidéos, reconfigurez le pour enlever la conversion et venez me faire part de votre problème sur le forum à l'adresse : http://forum.ubuntu-fr.org/viewtopic.php?id=200149
+(ou option bug du menu)"
+fi
+
+# Choix du mode d'utilisation graphique ou console
+zenity --question --title="Configuration en cours... 7/7" --width=700 --text="Voulez vous utiliser l'interface graphique ?
+
+
+
+En cliquant sur valider, le script affichera une barre de progression GTK+ lors du téléchargement des émissions.
+
+Sinon le script sera silencieux jusqu'à la fin des téléchargements."
+if [[ $? == "0" ]]
+then echo "GTK" >> .canal_config
+fi
+
+# Inscription de la version du script dans le fichier de config
+echo "version=$version" >> .canal_config
+
+#Fin de la configuration, le script est arreté
+rm -f .canal_config.bak
+echo "Configuration terminée"
+exit
+}
+##############################################
+
+
+
+
+##############################################
+# Ajout d'une entrée dans crontab
+
+annuler ()
+{
+    if [ $? = 1 ]; then
+	exit
+    fi
+}
+
+function _cron
+{
+    if ( grep -q CRON "$parent_dir"/.canal_config )
+    then
+	zenity --question --text="Une tache est déjà planifié voulez vous la modifier?"
+	sed -i '/CRON/d' "$parent_dir"/.canal_config
+    fi
+    annuler
+
+    crontab -l | grep DISPLAY >> /dev/null 2>&1
+    if  (test $? -eq  1 );
+    then echo 'DISPLAY=":0.0"' > tempcrontab
+    fi
+    crontab -l >> tempcrontab
+    sed -i '/canal/d' tempcrontab
+
+
+    JOURS=$(zenity --list --checklist --width=500 --height=447 \
+        --title "Sélectionner les jours" \
+        --text="Veuillez sélectionnez les jours :" \
+	--separator="," \
+	--hide-column=2 \
+	--column="choix" --column="N° jour" --column="jours" \
+	TRUE  "1" "lundi" \
+	TRUE  "2" "mardi" \
+	TRUE  "3" "mercredi" \
+	TRUE  "4" "jeudi" \
+	TRUE  "5" "vendredi" \
+	TRUE  "6" "samedi" \
+	TRUE  "7" "dimanche" \
+	);annuler
+
+    crontab -l | grep canal >> /dev/null 2>&1
+    if (test $? -eq 0); then
+	HH=`crontab -l | grep canal | awk -F' ' '{print $2}'`
+	MM=`crontab -l | grep canal | awk -F' ' '{print $1}'`
+    else
+	HH=hh
+	MM=mm
+    fi
+
+    CHHEURE=`zenity --entry \
+	--title="Heure" \
+	--text="Saisissez l'heure du lancement : exemple : 20H00" \
+	--entry-text "$HH"H"$MM"`
+    annuler
+
+    HEURE=`echo $CHHEURE | awk -F"H" '{print $1}'`
+    MIN=`echo $CHHEURE | awk -F"H" '{print $2}'`
+
+
+    echo "$MIN $HEURE * * $JOURS $parent_dir/canal" '#canal quotidienne' >> tempcrontab #canal quotidienne
+    crontab tempcrontab
+    zenity --text-info --filename=tempcrontab --width=500
+    rm tempcrontab
+    echo CRON >> .canal_config
+    exit
+}
+##############################################
+
+
+
+
+##############################################
+# Fonction --bug ouvre Fx sur la page du forum
+function _bug
+{
+    zenity --warning \
+	--text="Le script va ouvrir Firefox à l'adresse
+
+http://forum.ubuntu-fr.org/viewtopic.php?id=200149
+
+Veuillez y poster un descriptif de votre problème.
+Ecrivez votre message dans le rectangle blanc tout en bas et cliquez sur \"Poster\""
+    firefox "http://forum.ubuntu-fr.org/viewtopic.php?id=200149"
+    exit
+}
+##############################################
+
+
+
+
+##############################################
+# Fonction --about
+function _about
+{
+    zenity --info --title="Script Canal" \
+	--text="Créateur : Ras'
+Version : $version
+License : Ce programme est diffusée selon les termes de la Licence Publique Générale GNU publiée par la Free Software Foundation.
+Vous êtes libre de l'utiliser, le modifier et le redistribuer selon les termes de la license GNU GPL
+
+Todo list : $todo
+"
+    exit
+}
+##############################################
+
+
+
+
+
+##############################################
+# Lancement de la vérification de mise à jour éventuelle
+maj_auto
+cd "$parent_dir"/
+
+
+
+# Lancement automatique du script en mode config si la version du fichier .canal_config n'est pas la même que celle du script
+canal_config_version=$( cat .canal_config | grep "version=[v]" | cut -f2 -d "=" | cut -c 1-4 )
+if ! [[ `echo "$version" | cut -c 1-4` = $canal_config_version ]]
+then
+    zenity --error \
+	--text="Votre fichier de configuration n'existe pas ou ne correspond pas à la version actuelle du script.
+Lancement du script en mode configuration."
+    _config
+fi
+##############################################
+
+
+
+
+
+##############################################
+# Fonction "--menu" > menu principal
+# Appel fonction --menu
+if [[ "$1" == "-m" ]] || [[ "$1" == "--menu" ]]
+then
+    option=$( zenity --list --radiolist --height=355 --width=515 \
+	--title="Choix du mode de lancement" \
+	--text="Choissez l'action à exécuter" \
+	--column="" --column="" --column="action" \
+	--separator=" " \
+	--hide-column=2 \
+	TRUE "" "Télécharger les émissions d'hier" \
+	FALSE "date" "Télécharger des émissions antérieures à hier" \
+	FALSE "alacarte" "Choisir exeptionnellement les émissions à télécharger aujourd'hui" \
+	FALSE "config" "Modifier la configuration du script" \
+	FALSE "lanceur" "Ajouter un lanceur au menu Applications > Son et Video" \
+	FALSE "cron" "Automatiser l'exécution du script via cron" \
+	FALSE "help" "Afficher l'aide et quitte" \
+	FALSE "bug" "Déclarer un bug ( ou faire des remerciements ^^ )" \
+	FALSE "about" "A propos du script / Todo list" )
+
+    if [[ $? == "1" ]]
+    then zenity --warning --title="Fin du script" --text="Le script à été arreté"
+	exit
+    fi
+
+    set -- "--$option"
+    if [[ "$1" == "--" ]]
+    then set --
+    fi
+fi
+##############################################
+
+
+
+
+# Lancement du script avec une option :
+# Appel fonction --help
+if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]
+then _help
+fi
+# Appel fonction --lanceur
+if [[ "$1" == "-l" ]] || [[ "$1" == "--lanceur" ]]
+then _lanceur
+fi
+# Appel fonction --config
+if [[ "$1" == "-c" ]] || [[ "$1" == "--config" ]]
+then _config
+fi
+# Appel fonction --bug
+if [[ "$1" == "-b" ]] || [[ "$1" == "--bug" ]]
+then _bug
+fi
+# Appel fonction --about
+if [[ "$1" == "-?" ]] || [[ "$1" == "--about" ]]
+then _about
+fi
+# Appel fonction --alacarte
+if [[ "$1" == "-a" ]] || [[ "$1" == "--alacarte" ]]
+then
+    set -- "--date"
+    alacarte="yes"
+fi
+# Appel fonction --cron
+if [[ "$1" == "-cr" ]] || [[ "$1" == "--cron" ]]
+then _cron
+fi
+##############################################
+
+
+
+
+
+
+
+
+
+
+
+##############################################
+# Début du script, changement de répertoire et création du répertoire Canal+
+REP=$(head -1 .canal_config)
+mkdir -p "$REP"/Canal+
+cd "$REP"/Canal+
+
+# Vérification de la date de téléchargement choisie
+# Si le script est lancé avec l'option "date"
+if [[ "$1" == "-d" ]] || [[ "$1" == "--date" ]]
+then
+    date=$( zenity --calendar --date-format=%d/%m/%y --text="Choix de la date" )
+    if ! [[ $? == "0" ]]
+    then
+	zenity --warning --title="Fin du script" --text="Le script à été arreté"
+	exit
+    fi
+
+    if [[ "$date" == "`date +%d/%m/%y`" ]]
+    then date=$( date +%d/%m/%y --date '1 days ago' )
+    fi
+# Sinon
+else
+    if [[ -z $1 ]]
+    then d="1"
+    else d=$1
+    fi
+    date=$( date +%d/%m/%y --date ''$d' days ago' )
+fi
+
+dd=${date:0:2}
+mm=${date:3:2}
+yy=${date:6:2}
+date_us="$mm/$dd/$yy"
+echo `color 1 "Téléchargement des émissions du $date en cours...
+"`
+
+
+
+
+# Définition du mode de fonctionnement
+# Quotidien
+if ( grep -q QUO "$parent_dir"/.canal_config )
+then
+    if [[ $(ls | grep $yy$mm$dd ) ]]
+    then
+	error=1
+    else
+	rm -f *.flv
+	rm -f *-playlist.m3u
+    fi
+fi
+# Historique par date de diffusion
+if ( grep -q HIS "$parent_dir"/.canal_config )
+then
+    folder=$( date +%Y-%m-%d -d $date_us )
+    if [[ -d $folder ]]
+    then
+	error=1
+    else
+	mkdir -p $folder
+	cd $folder
+    fi
+fi
+# Historique par emission
+if ( grep -q HEM "$parent_dir"/.canal_config )
+then mode="HEM"
+fi
+
+
+# Fonction qui arrête le script si les émissions sont déja présentes
+if [[ $error == "1" ]]
+then
+    text="Les émissions du $date sont déja présente dans votre dossier Canal+
+
+    Pour néanmoins télécharger les vidéos, veuillez supprimer les vidéos existantes ou le dossier vidéo existant correspondant à la date désirée puis relancer le script"
+    if ( grep -q GTK "$parent_dir"/.canal_config )
+    then zenity --info --title="Emissions déja présentes" --text="$text"
+    else echo "$text"
+    fi
+    exit
+fi
+
+
+# Détection de la qualité
+if ( grep -q HIGH "$parent_dir"/.canal_config )
+then
+    quality="H"
+else
+    quality="L"
+fi
+
+
+# création de la playlist
+echo "# http://vod-flash.canalplus.fr/" > $yy-$mm-$dd"-playlist.m3u"
+
+
+# Choix des émissions si l'option "alacarte" est choisie
+if [[ $alacarte == "yes" ]]
+then
+    choix_emissions ".alacarte"
+fi
+##############################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+##############################################
+# Fonction qui converti les vidéos aux formats avi, mkv, ogm, ipod, archos, iriver, meizu ou psp
+function convert
+{
+    format=$( cat "$parent_dir"/.canal_config | grep "CONVERT=" | cut -f2 -d "=" )
+    source=$( basename "$1" )
+    case "$format" in
+	AVI)
+mencoder "$source" -ovc xvid -xvidencopts fixed_quant=3 -oac mp3lame -lameopts cbr:preset=128 -o "$source.avi" 2>/dev/null
+;;
+MKV)
+mencoder "$source" -ovc xvid -xvidencopts fixed_quant=3 -oac mp3lame -lameopts cbr:preset=128 -o "$source.mkv" 2>/dev/null
+;;
+IPOD)
+ffmpeg -y -i "$source" -vcodec mpeg4 -b 717000 -s 480x320 -aspect 16:9 -f mp4 -acodec aac "$source.mp4" 2>/dev/null
+;;
+ARCHOS)
+mencoder "$source" -ovc xvid -xvidencopts fixed_quant=3 -vf scale=320:-2 -oac mp3lame -lameopts cbr:preset=128 -af volume=+5 -o "$source.avi" 2>/dev/null &
+;;
+IRIVER)
+mencoder "$source" -ofps 15.000 -vf-add crop=0:0:-1:-1  -vf-add scale=320:240 -vf-add expand=320:240:-1:-1:1 -srate 44100 -ovc xvid -xvidencopts bitrate=380 -oac mp3lame -lameopts vbr=0  -lameopts br=128 -lameopts vol=0 -lameopts mode=0 -lameopts aq=7 -lameopts padding=3 -af volnorm -xvidencopts max_bframes=0:nogmc:noqpel -mc 0 -o "$source.mp4" 2>/dev/null
+;;
+MEIZU)
+mencoder "$source" -idx -noodml -ofps 20 -vf scale=320:-2,expand=:240:::1,crop=320:240,rotate=1 -ovc lavc -ffourcc XVID -lavcopts vcodec=mpeg4:vbitrate=384:vmax_b_frames=0:vhq -sws 9 -srate 44100 -oac mp3lame -lameopts cbr:br=128:mode=0 -o "$source.avi" 2>/dev/null
+;;
+PSP)
+ffmpeg -y -i "$source" -title "$source.mp4" -vcodec h264 -level 13 -g 250 -s 368x208 -r 29.97 -b 768 -acodec aac -ac 2 -ar 48000 -ab 128 "$source.mp4" 2>/dev/null
+;;
+esac
+rm -f "$source"
+if [[ "$format" == "AVI" ]] || [[ "$format" == "ARCHOS" ]] || [[ "format" == "MEIZU" ]]
+then VIDEO="$(echo $VIDEO | sed -e 's/\.flv$/\.avi/')"
+    mv "$source.avi" "$VIDEO"
+elif [[ "$format" == "MKV" ]]
+then VIDEO="$(echo $VIDEO | sed -e 's/.flv$/.mkv/')"
+    mv "$source.mkv" "$VIDEO"
+else VIDEO="$(echo $VIDEO | sed -e 's/.flv$/.mp4/')"
+    mv "$source.mp4" "$VIDEO"
+fi
+}
+
+
+
+
+
+
+
+
+
+
+
+# Fonction qui regroupe les vidéos dans des dossier à leur nom
+function copie
+{
+    mkdir -p "$1"
+    mv -f "$VIDEO" "$1"
+    if ! [[ -z $VIDEO ]]
+    then
+	VIDEO="$1/$VIDEO"
+    fi
+}
+
+
+
+# Fonction de téléchargement des émissions
+function download
+{
+    get_http "$1"
+    get_video "$2" "$3"
+    if ! [[ -z $VIDEO ]]
+    then
+	if ( grep -q "CONVERT" "$parent_dir"/.canal_config )
+	then convert "$VIDEO"
+	fi
+	if [[ $mode == "HEM" ]]
+	then copie "$2"
+	fi
+	echo `pwd`"/$VIDEO" >> $yy-$mm-$dd"-playlist.m3u"
+    fi
+    unset VIDEO
+    rm -f .menu_src_code
+    rm -f .video_src_code
+    unset video_id
+}
+
+# Fonction qui vérifie dans le fichier de config si la vidéo doit être téléchargée ou non, puis lance le téléchargement si nécessaire
+function check
+{
+    if [[ $alacarte == "yes" ]]
+    then if ( grep -q $1 .alacarte )
+	then download "$2" "$3" "$4"
+	fi
+    else
+	if ( grep -q $1 "$parent_dir"/.canal_config )
+	then download "$2" "$3" "$4"
+	fi
+    fi
+}
+
+
+function check_2
+{
+    day=$( date +%A -d $date_us )
+    date=$( echo $day | tr 'a-z' 'A-Z' )
+    if [[ $date == "SAMEDI" ]] || [[ $date == "DIMANCHE" ]]
+    then
+	date="WEEK-END"
+    fi
+    if [[ $alacarte == "yes" ]] ; then
+	if ( grep -q $1 .alacarte )
+	then download "$2" "$3" "$4"
+	fi
+    else
+	if ( grep -q $1 "$parent_dir"/.canal_config )
+	then download "$2" "$3" "$4"
+	fi
+    fi
+    date="$dd/$mm/$yy"
+}
+
+
+# fonction qui récupère le code source de la page contenant la vidéo dans un fichier ".menu_src_code"
+function get_http
+{
+    wget -q --save-cookies cookie.txt --keep-session-cookies $1 -O .menu_src_code
+    rm -f .menu_src_code
+    wget -q --load-cookies cookie.txt --keep-session-cookies $1 -O .menu_src_code
+    rm -f cookie.txt
+}
+
+
+# Fonction qui récupère le nom de la page de téléchargement de la vidéo dans le fichier ".video_src_code", récupère ensuite l'url direct de la vidéo, puis la télécharge
+function get_video
+{
+    if [[ -z $2 ]]
+    then
+	{
+	    aVideos=$( cat .menu_src_code | grep "$date"  | cut -f2 -d [ | cut -f1 -d ] ) # Majorité des émissions
+	    if ! [[ -z $aVideos ]]
+	    then
+		video_id=$( cat .menu_src_code | grep "aVideos\[$aVideos\]" | grep "CONTENT_ID" | cut -f2 -d '"' | head -n 1 )
+	    fi
+	}
+    else video_id=$( cat .menu_src_code | grep "$date" | grep chooseVideo | cut -f2 -d "'" | head -n 1 ) # Pepites sur le net, têtes à claques et meilleur du hier
+    fi
+    if [[ -z $aVideos ]] && [[ -z $video_id ]]
+    then
+	i=$(( $i + 100/$n ))
+	echo "$i % : L'émission '$1' n'a pu être téléchargée"
+	echo "_$1" >> "$parent_dir"/.canal_log
+    else
+	{
+	    page="http://www.canalplus.fr/flash/xml/module/embed-video-player/embed-video-player.php?video_id=$video_id"
+	    wget -q -O .video_src_code "$page"
+	    url=$( cat .video_src_code | grep -o "http://[^ ]*$quality.flv" )
+	    wget $url
+	    i=$(( $i + 100/$n ))
+	    echo "$i % : Fin du téléchargement de l'émission : $1"
+	    VIDEO=$( echo $url | cut -c 31- | cut -f2 -d "/" )
+	}
+    fi
+    set --
+}
+##############################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+##############################################
+# Initialisation des variables pour la barre de progression
+i="0"
+n=$( cat "$parent_dir"/.canal_config | head -4 | tail -1 | wc -w )
+
+
+# Téléchargement des émissions :
+function emissions
+{
+# Zapping
+    nom="le zapping"
+    url="http://www.canalplus.fr/index.php?pid=1830"
+    check ZAP "$url" "$nom"
+
+# Petit Journal Actu
+    nom="le petit journal actu"
+    url="http://www.canalplus.fr/c-humour/pid2397-c-le-petit-journal.html?catId=608"
+    check PJA "$url" "$nom"
+
+# Guignols
+    nom="les guignols de l'info"
+    url="http://www.canalplus.fr/index.php?pid=1784"
+    check GUI "$url" "$nom"
+
+# Météo
+    nom="la météo de Louise Bourguoin"
+    url="http://www.canalplus.fr/index.php?pid=2028"
+    check MET "$url" "$nom"
+
+# Petit Journal People
+    nom="le petit journal people"
+    url="http://www.canalplus.fr/c-humour/pid2397-c-le-petit-journal.html?catId=613"
+    check PJP "$url" "$nom"
+
+# Top 5
+    nom="le top 5 de Thomas Ngijol"
+    url="http://www.canalplus.fr/c-humour/pid2053-c-encore-de-rire.html?catId=1282"
+    check TOP "$url" "$nom"
+
+# SAV des emissions
+    nom="le Service Après Vente des émissions"
+    url="http://www.canalplus.fr/index.php?pid=1782"
+    check SAV "$url" "$nom"
+
+# Boite à questions
+    nom="la boite à questions"
+    url="http://www.canalplus.fr/index.php?pid=1786"
+    check BAQ "$url" "$nom"
+
+# Revue de presse
+    nom="la revue de presse de Chris Esquerre"
+    url="http://www.canalplus.fr/c-humour/pid2053-c-encore-de-rire.html?catId=2582"
+    check RDP "$url" "$nom"
+
+# Sebastien Tohen
+    nom="la chronique de Sebastien Tohen"
+    url="http://www.canalplus.fr/c-humour/pid2053-c-encore-de-rire.html?catId=2584"
+    check STO "$url" "$nom"
+
+# L'avis de Mouloud
+    nom="l'avis de Mouloud"
+    url="http://www.canalplus.fr/c-humour/pid2053-c-encore-de-rire.html?catId=622"
+    check ADM "$url" "$nom"
+
+# Le daily show
+    nom="le daily show"
+    url="http://www.canalplus.fr/c-humour/pid2053-c-encore-de-rire.html?catId=722"
+    check DSH "$url" "$nom"
+
+# La chronique de Stephane Guillon
+    nom="la chronique de Stephane Guillon"
+    url="http://www.canalplus.fr/c-humour/pid2053-c-encore-de-rire.html?catId=682"
+    check SGU "$url" "$nom"
+
+#Blakowski
+    nom="Les infos de blako"
+    url="http://www.canalplus.fr/c-humour/pid2053-c-encore-de-rire.html?catId=684"
+    check IDB "$url" "$nom"
+
+#Le champion de l'actu
+    nom="Le champion de l'actu"
+    url="http://www.canalplus.fr/c-humour/pid2053-c-encore-de-rire.html?catId=688"
+    check CDA "$url" "$nom"
+
+# Groland
+    nom="le Groland"
+    url="http://www.canalplus.fr/index.php?pid=1787"
+    check GRO "$url" "$nom"
+
+# Tetes à claques
+    nom="les têtes à claques"
+    url="http://www.canalplus.fr/index.php?pid=2170"
+    check TAC "$url" "$nom" 42
+
+# Pépites sur le net
+    nom="les pépites du net"
+    url="http://www.canalplus.fr/index.php?pid=1778"
+    check PEP "$url" "$nom" 42
+
+# Le meilleur du hier
+    nom="le meilleur du hier"
+    url="http://www.canalplus.fr/index.php?pid=1831"
+    check_2 MDH "$url" "$nom" 42
+}
+
+if ( grep -q GTK "$parent_dir"/.canal_config )
+then
+    ( emissions ) | zenity --progress \
+	--title="Téléchargement" \
+	--text="Téléchargement des émissions en cours..." \
+	--width=300 \
+	--auto-close \
+	--percentage=0
+else emissions
+fi
+##############################################
+
+
+# Déplacement de la playlist dans un dossier adapté si le script utilise une des options historique
+if ! ( grep -q QUO "$parent_dir"/.canal_config )
+then
+    mkdir -p "$REP"/Canal+/playlists/
+    mv *-playlist.m3u "$REP"/Canal+/playlists/
+fi
+
+
+
+
+
+
+
+
+
+
+
+
+##############################################
+# Fin des téléchargement, affichage des logs, diffusion dans lecteur vidéo si demande exprimée par l'utilisateur (via fenetre Zenity)
+log=$(cat "$parent_dir"/.canal_log)
+if ! [[ -z $log ]]
+then
+    erreur="Les vidéos suivantes n'ont pas été diffusées ce jour là :"
+fi
+lecteur_video=$( cat "$parent_dir"/.canal_config | head -2 | tail -1 )
+
+#zenity --question --title="Fin du script" --text="Les vidéos du $date ont été téléchargées
+#$erreur
+#$log
+
+#Voulez vous lancer la lecture dans $lecteur_video ?"
+
+if [[ $? == "0" ]]
+then
+    if [[ $lecteur_video == mplayer ]]
+    then lecteur_video="$lecteur_video -playlist"
+    fi
+    nohup "$lecteur_video" "$REP"/Canal+/playlists/$yy-$mm-$dd"-playlist.m3u" &
+fi
+
+rm -f "$parent_dir"/.canal_log
+rm -f .alacarte
+##############################################
+
+
+
+
+
+
+
+##############################################
+# Astuces / Post it personnel
+# Les liens direct vers les pages des émissions ont été trouvés sur les pages :
+# http://www.canalplus.fr/processus/page/commun/xt_plus_de_rire.php?PAGE_ID=2053&ZONE_TEMPLATE_ID=3659 ## pour le contenu d'encore + de rire
+# http://www.canalplus.fr//processus/page/commun/xt_plus_de_rire.php?PAGE_ID=2397&ZONE_TEMPLATE_ID=3659 ## pour le contenu du petit journal
+# Pour retrouver les liens : aller sur la page de menu et chercher ZONE_TEMPLATE dans le code source ^^
+#
+# Dans le code source de chacun des liens, on trouve un numéro, c'est le catID à rajouter à la fin du lien de la page générale. Par exemple pour le top5 :
+# http://www.canalplus.fr/c-humour/pid2053-c-encore-de-rire.html?catId=1282
