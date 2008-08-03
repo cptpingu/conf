@@ -2,6 +2,9 @@
 (setq user-nickname "Axel Berardino")
 (setq user-full-name "Axel Berardino")
 
+;; Enhanced GDB
+(setq gdb-many-windows t)
+
 ;; Our own modes repository
 (setq load-path (cons "~/.emacs.d/" load-path))
 (setq load-path (cons "~/.emacs.d/modes" load-path))

@@ -60,3 +60,8 @@ function x-ssh-agent()
     eval $(ssh-agent)
     ssh-add
 }
+
+function xgdb ()
+{
+  emacs --eval "(gdb \"gdb --annotate=3 $*\")";
+}
