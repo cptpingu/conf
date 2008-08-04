@@ -5,11 +5,11 @@ if [[ `uname -s` = "FreeBSD" ]] ; then
 elif [[ `uname -s` = "Linux" ]] ; then
     alias ls="ls --color=auto -hF"
 fi
-alias la='ls -a'
-alias l='ls -l'
-alias lt='l -t'
-alias ll='la -l'
-alias llt='ll -t'
+alias la='ls -ah'
+alias l='ls -lh'
+alias lt='l -th'
+alias ll='la -lh'
+alias llt='ll -th'
 
 function lcd()
 {
