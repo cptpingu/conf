@@ -11,7 +11,7 @@ else
     cmd=ls
 fi
 
-$cmd -l --color $@ |
+$cmd -lh --color $@ |
 sed 's/[dlsp-]\([rwx-].*\)/\1/' |
 sed 's/rwx/7/g' |
 sed 's/rw-/6/g' |

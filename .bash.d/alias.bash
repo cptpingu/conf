@@ -38,6 +38,8 @@ alias ......='cd ../../../../..'
 alias .......='cd ../../../../../..'
 alias ........='cd ../../../../../../..'
 alias ps='ps -fx'
+alias mkdir="mkdir $1 && chmod 755 $1"
+alias touch="touch $1 && chmod 644 $1"
 alias egrep="egrep --color --exclude='*.svn*'"
 alias grep="grep --color --exclude='*.svn*'"
 alias esed='sed --regexp-extended'

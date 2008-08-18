@@ -1,7 +1,7 @@
 #!/bin/sh
 
 iso_file="/media/sda5/iso/BroodWar.nrg"
-mount_point="/mnt/iso"
+mount_point="/media/cdrom0"
 game_location="/media/sda5/Games/Starcraft/StarCraft.exe"
 
 test -f "${mount_point}/install.exe"
