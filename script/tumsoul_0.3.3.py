@@ -5,8 +5,8 @@ import socket,md5,string,time,os,sys,random,urllib
 tumsoul_server = ('10.42.1.59', 4242)
 testlink_server = ('10.253.4.19', 80)
 testlink_server2 = ('10.42.4.20',  80)
-user = 'berard_a'
-password = 'zgivRn_J'
+user = 'user'
+password = 'pass'
 location = urllib.quote("Tumsoul 0.3.3")
 useragent = urllib.quote("tumsoul v0.3 [%d]"%os.getpid())
 states = ["actif", "away"]
