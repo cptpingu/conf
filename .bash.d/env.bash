@@ -17,7 +17,7 @@ fi
 
 export COLORTERM="yes"
 export GTK2_RC_FILES=$HOME/.gtkrc-2.0
-export LS_COLORS="${LS_COLORS}:*.c=0;33:*.cc=0;33:*.d=0;33:*.h=0;36:*.hh=0;36:*.pkg.sj=1;35:*.mxf=0;35:*.xml=0;34"
+export LS_COLORS="${LS_COLORS}:*.c=0;33:*.cc=0;33:*.d=0;33:*.h=0;36:*.hh=0;36:*.hxx=0;36:*.pkg.sj=1;35:*.mxf=0;35:*.xml=0;34"
 
 export MANWIDTH='79'
 
