@@ -102,6 +102,8 @@
 
 
 (load-file "~/.emacs.d/styles/c.el")
+(load "~/.emacs.d/modes/linum.el")
+(global-linum-mode 1)
 
 ;; Some script
 
