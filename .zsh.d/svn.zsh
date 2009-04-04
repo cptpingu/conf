@@ -1,4 +1,4 @@
-SVN=$(which svn)
+SVN=`which /usr/bin/svn` || SVN=$(which svn)
 
 svndiff()
 {
