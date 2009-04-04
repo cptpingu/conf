@@ -1,0 +1,62 @@
+#!/bin/sh
+
+#############################
+#COMPILATION ALIAS
+#############################
+#wget recursif
+#alias wgetr 'wget -r -N -l inf --connect-timeout=10'
+alias wgetr='wget -r -N -l inf'
+alias wgetc='wget -c'
+
+#recursive grep with filename and line number
+alias grepr='grep -r -n -H'
+
+#ghostview
+alias gv="gv -resize -center -antialias"
+alias xfig='xfig -metric -startgridmode 1'
+alias less='less -r -X -M'
+
+alias getx='export DISPLAY=:0.0'
+
+alias fixme='grep -n -a -s FIXME * 2> /dev/null'
+which gls > /dev/null 2> /dev/null && alias ls='gls'
+alias ls="ls --color=auto -hF"
+alias l='ls -lh'
+alias ll="ls -lhA"
+
+alias rm='rm -i'
+alias lstree='~/script/lstree.sh'
+
+alias a='alias'
+
+alias reload="source ~/.zshrc"
+alias emacs='emacs -fn 7x14'
+alias cls='clear'
+alias my_date="date +'%Y%m%d%H%M'"
+alias gdb='gdb --quiet'
+
+alias egrep="egrep --color --exclude='*.svn*'"
+alias grep="grep --color --exclude='*.svn*'"
+alias esed='sed --regexp-extended'
+alias dls="~/script/ls.sh"
+
+#Commandes pour Ubuntu.
+
+alias helpmount="echo 'mount -t iso9660 -o loop /path/to/isoimage.iso /path/to/mount/point/'"
+alias bin2avi="~/script/bin2avi.sh"
+alias starcraft="~/script/starcraft.sh"
+
+which colormake >/dev/null 2>&1 && alias make='colormake'
+which colordiff >/dev/null 2>&1 && alias diff='colordiff'
+which colorgcc >/dev/null 2>&1 && alias gcc='colorgcc'
+
+function x-ssh-agent()
+{
+    eval $(ssh-agent)
+    ssh-add
+}
+
+function xgdb ()
+{
+  emacs --eval "(gdb \"gdb --annotate=3 $*\")";
+}

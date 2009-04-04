@@ -1,0 +1,55 @@
+#!/bin/sh
+
+#mkdir then cd
+mkdcd ()
+{
+ mkdir $1 && cd $1
+}
+
+junk()
+{
+    find ${1-'.'} -name "*~" -exec rm -rf {} \;
+    find ${1-'.'} -name "\#*" -exec rm -rf {} \;
+    find ${1-'.'} -name "*.core" -exec rm -rf {} \;
+}
+
+#purge file in a dir
+purge ()
+{
+ (echo removing: *\~) 2>/dev/null
+ (rm -f *\~) 2>/dev/null;
+ (echo \.*\~) 2>/dev/null
+ (rm -f \.*\~) 2>/dev/null;
+ (echo \#*\#) 2>/dev/null
+ (rm -f \#*\#) 2>/dev/null;
+ echo "directory purged";
+}
+
+#recursive purge
+rpurge ()
+{
+ (echo removing: ***/*\~) 2>/dev/null
+ (rm -f ***/*\~) 2>/dev/null;
+ (echo ***/\.*\~) 2>/dev/null
+ (rm -f ***/\.*\~) 2>/dev/null;
+ (echo ***/\#*\#) 2>/dev/null
+ (rm -f ***/\#*\#) 2>/dev/null;
+ echo "directory recursively purged";
+}
+
+#purge .svn and .cvs
+rpurge_svn ()
+{
+ (echo removing: ***/.svn) 2>/dev/null
+ (rm -rf ***/.svn) 2>/dev/null;
+ (echo ***/.cvs) 2>/dev/null
+ (rm -rf ***/.cvs) 2>/dev/null;
+ echo ".svn and .cvs directory recursively purged";
+}
+
+unlock ()
+{
+    (find ~/.thunderbird -name lock -exec rm {} \;) 2>/dev/null
+    (find ~/.mozilla -name lock -exec rm {} \;) 2>/dev/null
+    echo "Removed locks for firefox and thunderbird";
+}
