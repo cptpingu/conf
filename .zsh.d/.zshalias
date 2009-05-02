@@ -1,8 +1,5 @@
 #!/bin/sh
 
-#source global alias
-[ -f ~/.zsh.d/alias ] && . ~/.zsh.d/alias
-
 #remove autocorrect on those commands:
 alias mv='nocorrect mv'
 alias cd='nocorrect cd'
@@ -12,3 +9,6 @@ alias man='nocorrect man'
 alias find='noglob find'
 alias gcc='nocorrect gcc'
 alias mkdir='nocorrect mkdir'
+
+#source global alias
+[ -f ~/.zsh.d/alias ] && . ~/.zsh.d/alias

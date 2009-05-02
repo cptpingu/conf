@@ -45,6 +45,9 @@ alias dls="~/script/ls.sh"
 alias helpmount="echo 'mount -t iso9660 -o loop /path/to/isoimage.iso /path/to/mount/point/'"
 alias bin2avi="~/script/bin2avi.sh"
 alias starcraft="~/script/starcraft.sh"
+alias lsgrade="~/script/lsgrade.sh"
+alias dumpmusic="mplayer -vc dummy -vo null -dumpaudio -dumpfile ~/Desktop/DumpedMusic.mp3 /tmp/Flash*"
+alias sshlog="cat /var/log/auth.log | grep 'ssh.*password'"
 
 which colormake >/dev/null 2>&1 && alias make='colormake'
 which colordiff >/dev/null 2>&1 && alias diff='colordiff'

@@ -22,8 +22,8 @@ set b off
 ###################
 ## Options Settings (man zshoptions)
 ###################
-setopt correct                 # spelling correction
-setopt autocd                  # change to dirs without cd
+unsetopt correct                 # spelling correction
+unsetopt autocd                  # change to dirs without cd
 
 setopt nobeep #disable beep in zsh
 setopt extended_glob
