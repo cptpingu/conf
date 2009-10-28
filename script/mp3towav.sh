@@ -20,7 +20,7 @@ ans=$(eval $zen)
     for i in $ans; do
 	if [ -f "$i" ]; then
 	    notify-send -t 1000 -u low -i gtk-dialog-info \
-		"Mp3 to Wav" "<b>Converting</b> <i>`basename $i`</i>..."
+		"Mp3 to Wav" "<b>Convertion de</b> <i>`basename $i`</i>..."
 	    ffmpeg -i "$i" "${i%.mp3}.wav"
 	    count=$(($count + 1))
 	    echo "scale=2;($count /$nb) * 100" | bc
