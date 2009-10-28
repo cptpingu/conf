@@ -17,14 +17,16 @@ ans=$(eval $zen)
     IFS=":"
     count=0
     echo "0"
+    notify-send -t 1000 -u low -i gtk-dialog-info \
+	"Mp3 to Wav" "Début de conversion des mp3..."
     for i in $ans; do
 	if [ -f "$i" ]; then
-	    notify-send -t 1000 -u low -i gtk-dialog-info \
-		"Mp3 to Wav" "<b>Convertion de</b> <i>`basename $i`</i>..."
 	    ffmpeg -i "$i" "${i%.mp3}.wav"
 	    count=$(($count + 1))
 	    echo "scale=2;($count /$nb) * 100" | bc
 	fi
     done
     IFS=$OLD_IFS
-) | zenity --progress --title="Convertion des mp3 en wav..." --auto-close
+) | zenity --progress --title="Conversion des mp3 en wav..." --auto-close
+notify-send -t 1000 -u low -i gtk-dialog-info \
+    "Mp3 to Wav" "Tous les mp3 ont été convertis !"
