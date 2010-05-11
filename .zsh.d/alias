@@ -63,3 +63,7 @@ function xgdb ()
 {
   emacs --eval "(gdb \"gdb --annotate=3 $*\")";
 }
+
+alias dv3='ssh aberardino@dv3.twenga.com'
+alias mountdv3='sshfs aberardino@dv3.twenga.com: dv3'
+alias ack='~/script/ack.pl'
