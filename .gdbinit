@@ -973,6 +973,8 @@ end
 #__________________gdb options_________________
 set confirm off
 set verbose off
+set history save on
+set print pretty
 set prompt \033[\033[31;m\033] gdb $ \033[0m
 set output-radix 0x10
 set input-radix 0x10
