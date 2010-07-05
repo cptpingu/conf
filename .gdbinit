@@ -975,7 +975,9 @@ set confirm off
 set verbose off
 set history save on
 set print pretty
-set prompt \033[\033[31;m\033] gdb $ \033[0m
+set prompt \033[1;32mgdb\033[1;30m$ \033[0;0m
+#\033[\033[31;m\033] gdb $ \033[0m
+
 set output-radix 0x10
 set input-radix 0x10
 # these make gdb never pause in its output
