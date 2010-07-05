@@ -29,7 +29,7 @@
                           (file-name-nondirectory prefix) dir))))))
 
 (setq company-file-name-regexp
-  "\\(?:\\`\\|[[:space:]\"]\\)\\(~?/[^[:space:]]*\\)\\=")
+  "\\(?:\\'\\|[[:space:]\"]\\)\\(~?/[^[:space:]]*\\)\\=")
 
 (defun company-install-file-name-completions ()
   (company-add-completion-rule
@@ -49,7 +49,7 @@
 (defun company-grab-lisp-symbol ()
   (let ((prefix (or (company-grab company-lisp-symbol-regexp) "")))
     (unless (and (company-in-symbol-or-comment (- (point) (length prefix)))
-                 (/= (char-before (- (point) (length prefix))) ?`))
+                 (/= (char-before (- (point) (length prefix))) ?'))
       prefix)))
 
 (defun company-install-lisp-completions ()
@@ -114,7 +114,7 @@
 
 (defun company-grab-end-tag-name ()
   "Return the open XML end tag before point, if any.
-If `nxml-slash-auto-complete-flag' is non-nil, always returns nil, because in
+If 'nxml-slash-auto-complete-flag' is non-nil, always returns nil, because in
 that case we don't want completion."
   (unless nxml-slash-auto-complete-flag
     (company-grab company-xml-in-end-tag-name-regexp 1)))
@@ -437,7 +437,7 @@ that case we don't want completion."
               (puthash property val hash))
           (puthash (car pair) val hash))))
       hash)
-  "A hash map created from `company-css-property-alist' for fast reference.")
+  "A hash map created from 'company-css-property-alist' for fast reference.")
 
 (defconst company-css-html-tags
   '("a" "abbr" "acronym" "address" "applet" "area" "b" "base" "basefont" "bdo"
@@ -474,7 +474,7 @@ that case we don't want completion."
 
 ;;; tags
 (defconst company-css-tag-regexp
-  (concat "\\(?:\\`\\|}\\)[[:space:]]*"
+  (concat "\\(?:\\'\\|}\\)[[:space:]]*"
           ;; multiple
           "\\(?:"
           ;; previous tags:
@@ -491,7 +491,7 @@ that case we don't want completion."
 
 ;;; pseudo id
 (defconst company-css-pseudo-regexp
-  (concat "\\(?:\\`\\|}\\)[[:space:]]*"
+  (concat "\\(?:\\'\\|}\\)[[:space:]]*"
           ;; multiple
           "\\(?:"
           ;; previous tags:
@@ -560,7 +560,7 @@ Returns \"\" if no property found, but feasible at this position."
 
 ;; (defun company-semantic-completion-func (prefix)
 ;;   "Complete a symbol name by name based on the current context.
-;; This is heavily based on `semantic-complete-inline-analyzer'."
+;; This is heavily based on 'semantic-complete-inline-analyzer'."
 ;;   (let* ((context (semantic-analyze-current-context))
 ;;          (collector (semantic-collector-analyze-completions
 ;; 		     "inline"
@@ -577,8 +577,8 @@ Returns \"\" if no property found, but feasible at this position."
 ;;     (mapcar 'semantic-tag-name complst)))
 
 (defun company-semantic-ctxt-current-symbol ()
-  "Return the last element of `semantic-ctxt-current-symbol'."
-  ;; `semantic-complete-inline-analyzer' returns more than one element, in cases
+  "Return the last element of semantic-ctxt-current-symbol."
+  ;; semantic-complete-inline-analyzer returns more than one element, in cases
   ;; like foo->bar
   (or (thing-at-point 'symbol) ""))
 ;;   (or (car (last (ignore-errors (semantic-ctxt-current-symbol)))) ""))
@@ -586,10 +586,10 @@ Returns \"\" if no property found, but feasible at this position."
 ;;     (or (car symbols) "")))
 
 ;; (defvar company-semantic-context-regexp
-;;   "\\(?:\\`\\|\\s \\)\\(\\(?:\\s_\\|\\sw\\|\\.\\|->\\)+\\)\\=")
+;;   "\\(?:\\'\\|\\s \\)\\(\\(?:\\s_\\|\\sw\\|\\.\\|->\\)+\\)\\=")
 
 ;; (defun company-grab-semantic-context ()
-  ;; We don't actually need a prefix, because `company-semantic-completion-func'
+  ;; We don't actually need a prefix, because 'company-semantic-completion-func'
   ;; doesn't need it.  This is just to support conditional completions on prefix
   ;; length
 ;;   (unless (company-in-symbol-or-comment (point))
@@ -648,10 +648,10 @@ Returns \"\" if no property found, but feasible at this position."
 ;;             (mapcar 'semantic-tag-name symbols))))
 
 ;; (defvar company-semantic-context-regexp
-;;   "\\(?:\\`\\|\\s \\)\\(\\(?:\\s_\\|\\sw\\|\\.\\|->\\)+\\)\\=")
+;;   "\\(?:\\'\\|\\s \\)\\(\\(?:\\s_\\|\\sw\\|\\.\\|->\\)+\\)\\=")
 
 ;; (defun company-grab-semantic-context ()
-;;   ;; We don't actually need a prefix, because `company-semantic-completion-func'
+;;   ;; We don't actually need a prefix, because 'company-semantic-completion-func'
 ;;   ;; doesn't need it.  This is just to support conditional completions on prefix
 ;;   ;; length
 ;;   (unless (company-in-symbol-or-comment (point))

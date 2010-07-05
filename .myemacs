@@ -109,9 +109,9 @@
 
 ;; Completion
 
-(require 'company-mode)
-(require 'company-bundled-completions)
-(company-install-bundled-completions-rules)
+;;(require 'company-mode)
+;;(require 'company-bundled-completions)
+;;(company-install-bundled-completions-rules)
 
 ;; Spell checking
 

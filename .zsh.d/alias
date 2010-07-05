@@ -59,7 +59,7 @@ function x-ssh-agent()
     ssh-add
 }
 
-function xgdb ()
+function xgdb()
 {
   emacs --eval "(gdb \"gdb --annotate=3 $*\")";
 }
@@ -67,3 +67,9 @@ function xgdb ()
 alias dv3='ssh aberardino@dv3.twenga.com'
 alias mountdv3='sshfs aberardino@dv3.twenga.com: dv3'
 alias ack='~/script/ack.pl'
+alias tunnel='ssh -D 9999 aberardino@dv3.twenga.com'
+
+function search()
+{
+    ack -i --cpp $1
+}
