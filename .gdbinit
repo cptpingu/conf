@@ -117,15 +117,6 @@ document stack
 print call stack
 end
 
-define frame
-  info frame
-  info args
-  info locals
-end
-document frame
-print stack frame
-end
-
 
 define flags
   if (($eflags >> 0xb) & 1 )
@@ -238,13 +229,6 @@ define sig
 end
 document sig
 print signal actions for target
-end
-
-define thread
-  info threads
-end
-document thread
-print threads in target
 end
 
 define u
@@ -439,16 +423,6 @@ define init
 end
 document init
 run program; break on _init()
-end
-
-define start
-  set $show_context = 1
-  set $show_nest_insn=0
-  tbreak _start
-  r
-end
-document start
-run program; break on _start()
 end
 
 define sstart
