@@ -273,7 +273,13 @@
       (cons '("\\.xml" . sgml-mode) auto-mode-alist))
 
 
+(load "~/.emacs.d/modes/protobuf-mode.el")
 
+
+;;(add-to-list 'auto-mode-alist '("\\.d$" . d-mode))
+(add-to-list 'auto-mode-alist '("\\.pro$" . sh-mode)) ;; Qt .pro files
+(add-to-list 'auto-mode-alist '("CMakeLists.txt$" . cmake-mode))
+(add-to-list 'auto-mode-alist '("\\.cmake$" . cmake-mode))
 
 
 ;; ================= THEME ==============================
