@@ -274,12 +274,13 @@
 
 
 (load "~/.emacs.d/modes/protobuf-mode.el")
-
+(load "~/.emacs.d/modes/cmake-mode.el")
 
 ;;(add-to-list 'auto-mode-alist '("\\.d$" . d-mode))
 (add-to-list 'auto-mode-alist '("\\.pro$" . sh-mode)) ;; Qt .pro files
 (add-to-list 'auto-mode-alist '("CMakeLists.txt$" . cmake-mode))
 (add-to-list 'auto-mode-alist '("\\.cmake$" . cmake-mode))
+(add-to-list 'auto-mode-alist '("\\.proto$" . protobuf-mode))
 
 
 ;; ================= THEME ==============================
