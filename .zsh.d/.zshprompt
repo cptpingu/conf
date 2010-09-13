@@ -1,5 +1,13 @@
 #!/bin/zsh
 
+autoload -Uz vcs_info
+
+zstyle ':vcs_info:*' stagedstr '%F{28}●'
+zstyle ':vcs_info:*' unstagedstr '%F{11}●'
+zstyle ':vcs_info:*' check-for-changes true
+zstyle ':vcs_info:(sv[nk]|bzr):*' branchformat '%b%F{1}:%F{11}%r'
+zstyle ':vcs_info:*' enable git svn
+
 function precmd {
 
     local TERMWIDTH
@@ -11,7 +19,11 @@ function precmd {
     PR_FILLBAR=""
     PR_PWDLEN=""
 
-    local promptsize=${#${(%):---(%n@%m)---()--}}
+    GIT="${vcs_info_msg_0_}"
+    CLEAN=$GIT
+    CLEAN=`echo $CLEAN | sed -r 's/%F\{[^\}]*\}//g'`
+    CLEAN="${CLEAN}+"
+    local promptsize=$((${#${(%):---(%n@%m)---()--}} + ${#${CLEAN}} - 1 ))
     local pwdsize=${#${(%):-%~}}
 
     if [[ "$promptsize + $pwdsize" -gt $TERMWIDTH ]]; then
@@ -19,6 +31,14 @@ function precmd {
     else
 	PR_FILLBAR="\${(l.(($TERMWIDTH - ($promptsize + $pwdsize)))..${PR_HBAR}.)}"
     fi
+
+    if [[ -z $(git ls-files --other --exclude-standard 2> /dev/null) ]]; then
+        zstyle ':vcs_info:*' formats '[%F{green}%b%c%u%F{yellow}]'
+    else
+        zstyle ':vcs_info:*' formats '[%F{green}%b%c%u%F{red}●%F{yellow}]'
+    fi
+
+    vcs_info
 }
 
 setprompt () {
@@ -84,11 +104,10 @@ if [ x$plateforme = xLinux ] ; then
 # $PR_GREY$PR_SHIFT_IN$PR_HBAR$PR_SHIFT_OUT$PR_NO_COLOUR '
 
 ########
-
     PROMPT='$PR_SET_CHARSET$PR_STITLE${(e)PR_TITLEBAR}\
 $PR_YELLOW$PR_SHIFT_IN$PR_ULCORNER$PR_HBAR${PR_SHIFT_OUT}[\
 $PR_BLUE%(!.${PR_RED}ROOT%s.%n)$PR_CYAN@$PR_BLUE%m\
-${PR_YELLOW}]$PR_SHIFT_IN$PR_HBAR$PR_YELLOW$PR_HBAR${(e)PR_FILLBAR}$PR_YELLOW$PR_HBAR${PR_SHIFT_OUT}[\
+${PR_YELLOW}]${GIT}$PR_SHIFT_IN$PR_HBAR$PR_YELLOW$PR_HBAR${(e)PR_FILLBAR}$PR_YELLOW$PR_HBAR${PR_SHIFT_OUT}[\
 $PR_GREEN%$PR_PWDLEN<...<%~%<<\
 ${PR_YELLOW}]$PR_SHIFT_IN$PR_HBAR$PR_YELLOW$PR_URCORNER$PR_SHIFT_OUT\
 
