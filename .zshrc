@@ -1,7 +1,5 @@
 #!/bin/sh
 
-xrdb -load ~/.Xdefaults
-
 #env
 source ~/.zsh.d/.zshenv
 
