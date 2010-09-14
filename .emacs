@@ -11,6 +11,9 @@
 ;;
 ;; load our
 ;;
+
+(require 'w3m-load)
+
 (if (file-exists-p "~/.myemacs")
     (load-file "~/.myemacs")
 )

@@ -74,3 +74,5 @@ function search()
 {
     ack -i --cpp $1
 }
+
+alias tw_deb_upload='scp *.deb *.dsc *.changes *.tar.gz abique@fs6.twenga.com:/var/www/debian/_incoming && rm *.deb *.dsc *.changes *.tar.gz'
