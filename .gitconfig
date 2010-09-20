@@ -1,0 +1,27 @@
+[user]
+    name = Axel Berardino
+    email = axel.berardino@gmail.com
+
+[alias]
+    ci = commit -a
+    co = checkout
+    st = status -a
+    praise = blame
+
+[core]
+    pager = less -FRSX
+
+#[apply]
+#    whitespace = strip
+
+[diff]
+    rename = copy
+
+[color]
+    branch = true
+    diff = true
+    grep = true
+    interactive = true
+    pager = true
+    status = true
+    ui = true
