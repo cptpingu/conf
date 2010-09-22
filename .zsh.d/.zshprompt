@@ -29,6 +29,7 @@ function zrcautoload()
     fi
     return 0
 }
+zrcautoload vcs_info || vcs_info() { return 1 }
 
 function precmd
 {
@@ -60,7 +61,7 @@ function precmd
         zstyle ':vcs_info:*' formats '[%F{green}%b%c%u%F{red}●%F{yellow}]'
     fi
 
-    zrcautoload vcs_info || vcs_info() { return 1 }
+    vcs_info
 }
 
 setprompt ()
